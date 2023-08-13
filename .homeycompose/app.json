@@ -16,11 +16,6 @@
     "climate"
   ],
   "permissions": [],
-  "images": {
-    "small": "/assets/images/small.png",
-    "large": "/assets/images/large.png",
-    "xlarge": "/assets/images/xlarge.png"
-  },
   "author": {
     "name": "Vadim Chichikalyuk",
     "email": "chichikalyuk@gmail.com"

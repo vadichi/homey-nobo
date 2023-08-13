@@ -15,33 +15,22 @@
  * with Homey-Nobo. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import Homey from 'homey';
-import {DiscoveredDevice} from './definitions';
-import {NoboHubAPI} from './device_api';
+export type DiscoveredDevice = { ip: string, serial_start: string }
 
-export class NoboHub extends Homey.Device {
+export class AsyncQueue<T> {
+    private items: T[] = Array<T>(0);
 
-    private static addedDeviceSerial: string = '';
-
-    static attemptConnection(device: DiscoveredDevice, serial_end: string) {
-        let serial: string = device.serial_start.concat(serial_end);
-
-
+    async enqueue(item: T) {
+        this.items.unshift(item);
     }
 
-    async onAdded() {
-        this.log('Adding a new device');
+    async dequeue(): Promise<T> {
+        while(this.items.length == 0) {}
 
-        this.log(`Changing temporary serial to ${NoboHub.addedDeviceSerial}`);
-        await this.setSettings({serial: NoboHub.addedDeviceSerial});
-
-        this.log('New device added');
+        return this.items.pop()!;
     }
 
-    async onInit() {
-        this.log('Initialised');
+    async clear() {
+        this.items = Array<T>(0);
     }
-
 }
-
-module.exports = NoboHub;

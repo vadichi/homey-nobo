@@ -3,28 +3,64 @@
     "en": "Nobo Hub"
   },
   "class": "thermostat",
-  "capabilities": [],
+  "capabilities": [
+    "nobo_status_capability"
+  ],
   "platforms": [
     "local"
   ],
   "connectivity": [
     "lan"
   ],
-  "images": {
-    "small": "{{driverAssetsPath}}/images/small.png",
-    "large": "{{driverAssetsPath}}/images/large.png",
-    "xlarge": "{{driverAssetsPath}}/images/xlarge.png"
-  },
+  "settings": [
+    {
+      "id": "serial",
+      "type": "number",
+      "label": {
+        "en": "Serial number"
+      },
+      "hint": {
+        "en": "Your Nobo Hub's serial number (12 digits)"
+      }
+    }
+  ],
   "pair": [
     {
       "id": "list_devices",
       "template": "list_devices",
-      "navigation": { "next": "add_devices" },
-      "options": { "singular": true }
+      "options": {
+        "singular": true
+      },
+      "navigation": {
+        "next": "pincode"
+      }
+    },
+    {
+      "id": "pincode",
+      "template": "pincode",
+      "options": {
+        "title": {
+          "en": "Log in"
+        },
+        "hint": {
+          "en": "Enter the last three digits of the Nobo Hub serial number"
+        },
+        "type": "number",
+        "length": 3,
+        "navigation": {
+          "next": "add_devices",
+          "prev": "list_devices"
+        }
+      }
     },
     {
       "id": "add_devices",
       "template": "add_devices"
     }
-  ]
+  ],
+  "energy": {
+    "approximation": {
+      "usageConstant": 0
+    }
+  }
 }

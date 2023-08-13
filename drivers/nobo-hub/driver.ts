@@ -16,64 +16,91 @@
  */
 
 import Homey from 'homey';
-import dgram from 'dgram';
 import PairSession from "homey/lib/PairSession";
+import {NoboHub} from './device';
+import {DiscoveredDevice} from './definitions';
+import * as Buffer from "buffer";
+import * as dgram from "dgram";
 
 const DISCOVERY_MESSAGE_MARKER: string = '__NOBOHUB__';
+const DISCOVERY_PORT: number = 10000;
 
-class NoboHubDriver extends Homey.Driver {
+export class NoboHubDriver extends Homey.Driver {
 
-  private broadcast_receive_socket: dgram.Socket | undefined;
-  private discovered_devices: { ip: string, serial_digits: string }[] = [];
+    private discovery_listener: dgram.Socket = dgram.createSocket('udp4');
+    private discovered_devices: DiscoveredDevice[] = Array<DiscoveredDevice>(0);
 
-  async onInit() {
-    this.broadcast_receive_socket = dgram.createSocket('udp4');
-    this.broadcast_receive_socket.bind(10000, () => {
-      this.broadcast_receive_socket?.setBroadcast(true);
-    });
-    this.broadcast_receive_socket.on('message', (message, sender) => {
-      let sender_ip = sender.address;
+    async onInit() {
+        this.log('Initialising');
 
-      for (let discovered_device of this.discovered_devices) {
-        if (discovered_device.ip == sender_ip) { return; }
-      }
+        this.discovery_listener.bind(DISCOVERY_PORT, () => {
+            this.discovery_listener.setBroadcast(true);
+        });
 
-      let message_text = message.toString();
-      let message_serial_segment_start = message_text.indexOf(DISCOVERY_MESSAGE_MARKER) + DISCOVERY_MESSAGE_MARKER.length;
-      let message_serial_segment = message_text.substring(message_serial_segment_start);
+        this.discovery_listener.on('message', async (message: Buffer, sender: dgram.RemoteInfo) => {
+            await this.discoveryHandleMessage(message, sender);
+        });
 
-      this.discovered_devices.push({ ip: sender_ip, serial_digits: message_serial_segment });
+        this.log('Initialised');
+        this.log('Started listening for discovery broadcasts');
+    }
 
-      this.log(`NoboHubDriver has discovered a new Nobo Hub at ${sender_ip}, serial no. ${message_serial_segment}XXX`);
-    });
+    async onPair(session: PairSession) {
+        this.log('New pairing session started');
 
-    this.log('NoboHubDriver has been initialized');
-  }
+        session.setHandler('list_devices', async () => {
+            return await this.discoveryListDevices();
+        });
 
-  async onPairListDevices() {
-    // Allow for 2 cycles (2 * 2 seconds) of discovery messages to pass to ensure all devices are discovered
-    await new Promise(resolve => setTimeout(resolve, 4100));
+        let selected_device: any;
+        session.setHandler('list_devices_selection', async (selected_devices) => {
+            selected_device = selected_devices[0];
 
-    let devices = [];
-    for (let discovered_device of this.discovered_devices) {
-        devices.push({
-            name: `Nobo Hub ${discovered_device.serial_digits}XXX`,
-            data: {
-              serial_digits: discovered_device.serial_digits,
-            },
-            store: {
-              ip: discovered_device.ip
-,            }
+            this.log(`Selected device ${selected_device.name}`);
+        });
+
+        session.setHandler('pincode', async(pin_data) => {
+            let pin = pin_data[0].concat(pin_data[1]).concat(pin_data[2]);
+            this.log(`Attempted serial verification: ${selected_device.serial_start}${pin}`);
+
+
         });
     }
 
-    return devices;
-  }
+    private async discoveryListDevices() {
+        await new Promise(resolve => setTimeout(resolve, 4100));
 
-  async onSomething() {
-    client.write('Hello, server.');
-    
-  }
+        return this.discovered_devices.map(discovered_device => {
+           return {
+               name: `Nobo Hub ${discovered_device.serial_start}`,
+               data: {
+                   serial_start: discovered_device.serial_start,
+               },
+               store: {
+                   ip: discovered_device.ip,
+               },
+               settings: {
+                   serial: parseInt(discovered_device.serial_start)
+               }
+           }
+        });
+    }
+
+    private async discoveryHandleMessage(message: Buffer, sender: dgram.RemoteInfo) {
+        let sender_ip: string = sender.address;
+
+        for (let discovered_device of this.discovered_devices) {
+            if (discovered_device.ip == sender_ip) { return; }
+        }
+
+        let message_text: string = message.toString();
+        let message_serial_index: number = message_text.indexOf(DISCOVERY_MESSAGE_MARKER) + DISCOVERY_MESSAGE_MARKER.length;
+        let message_serial: string = message_text.substring(message_serial_index);
+
+        this.discovered_devices.push({ ip: sender_ip, serial_start: message_serial });
+
+        this.log(`Discovered a new Nobo-Hub at ${sender_ip}, serial no. ${message_serial}XXX`);
+    }
 }
 
 module.exports = NoboHubDriver;

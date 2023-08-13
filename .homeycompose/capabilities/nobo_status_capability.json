@@ -1,0 +1,23 @@
+{
+	"type": "enum",
+	"values": [
+		{
+			"id": "home",
+			"title": {
+				"en": "At home"
+			}
+		},
+		{
+			"id": "away",
+			"title": {
+				"en": "Away"
+			}
+		}
+	],
+	"title": {
+		"en": "Mode"
+	},
+	"uiComponent": "picker",
+	"getable": true,
+	"setable": true
+}
