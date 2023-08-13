@@ -62,12 +62,17 @@ class NoboHubDriver extends Homey.Driver {
               serial_digits: discovered_device.serial_digits,
             },
             store: {
-              ip: discovered_device.ip,
-            }
+              ip: discovered_device.ip
+,            }
         });
     }
 
     return devices;
+  }
+
+  async onSomething() {
+    client.write('Hello, server.');
+    
   }
 }
 
