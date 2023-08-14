@@ -17,7 +17,7 @@
 
 import Homey from 'homey';
 import PairSession from "homey/lib/PairSession";
-import {NoboHub} from './device';
+import NoboHub from './device';
 import {DiscoveredDevice} from './definitions';
 import * as Buffer from "buffer";
 import * as dgram from "dgram";
@@ -41,8 +41,8 @@ export class NoboHubDriver extends Homey.Driver {
             await this.discoveryHandleMessage(message, sender);
         });
 
-        this.log('Initialised');
         this.log('Started listening for discovery broadcasts');
+        this.log('Initialised');
     }
 
     async onPair(session: PairSession) {
@@ -61,9 +61,13 @@ export class NoboHubDriver extends Homey.Driver {
 
         session.setHandler('pincode', async(pin_data) => {
             let pin = pin_data[0].concat(pin_data[1]).concat(pin_data[2]);
-            this.log(`Attempted serial verification: ${selected_device.serial_start}${pin}`);
+            let serial = selected_device.data.serial_start.concat(pin);
 
+            this.log(`Attempting serial verification: ${serial}`);
 
+            let result = await NoboHub.attemptConnection(selected_device.store.ip, serial);
+            this.log(result[1]);
+            return result[0];
         });
     }
 

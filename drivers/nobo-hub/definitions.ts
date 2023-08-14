@@ -15,7 +15,10 @@
  * with Homey-Nobo. If not, see <https://www.gnu.org/licenses/>.
  */
 
-export type DiscoveredDevice = { ip: string, serial_start: string }
+export type DiscoveredDevice = {
+    ip: string,
+    serial_start: string
+}
 
 export class AsyncQueue<T> {
     private items: T[] = Array<T>(0);
@@ -25,7 +28,9 @@ export class AsyncQueue<T> {
     }
 
     async dequeue(): Promise<T> {
-        while(this.items.length == 0) {}
+        while (this.items.length == 0) {
+            await new Promise<void>(resolve => setTimeout(resolve, 0));
+        }
 
         return this.items.pop()!;
     }
@@ -34,3 +39,4 @@ export class AsyncQueue<T> {
         this.items = Array<T>(0);
     }
 }
+

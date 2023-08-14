@@ -17,11 +17,11 @@
 
 import Homey from 'homey';
 
-class HomeyNobo extends Homey.App {
+export class HomeyNobo extends Homey.App {
 
-  async onInit() {
-    this.log('Homey-Nobo has been initialized');
-  }
+    async onInit() {
+        this.log('Initialised');
+    }
 
 }
 
