@@ -104,16 +104,23 @@ export class NoboHub extends Homey.Device {
     }
 
     async onInit() {
-        this.log('Initialised');
+        this.log('Initialising');
 
         if (NoboHub.addedDeviceSocket == undefined) {
-            // Handle result
-            await NoboHub.attemptConnection(this.getStoreValue('ip'), String(this.getSetting('serial')));
+            let ip = this.getStoreValue('ip');
+            let serial = String(this.getSetting('serial'));
+
+            this.log(`Attempting connection to an existing device at ${ip}`);
+
+            // Handle result; launch repair if necessary
+            await NoboHub.attemptConnection(ip, serial);
+
+            this.socket = NoboHub.addedDeviceSocket!;
+            this.message_queue = NoboHub.addedDeviceMessageQueue!;
+            NoboHub.resetAddedDevice();
         }
 
-        this.socket = NoboHub.addedDeviceSocket!;
-        this.message_queue = NoboHub.addedDeviceMessageQueue!;
-        NoboHub.resetAddedDevice();
+        this.log('Initialised');
     }
 
 
