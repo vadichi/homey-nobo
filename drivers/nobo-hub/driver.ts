@@ -72,26 +72,27 @@ export class NoboHubDriver extends Homey.Driver {
                     this.log('Paired successfully');
                     break;
                 case 'INVALID_COMMAND_SET_VERSION':
-                    this.log('Failed to pair: invalid command set version');
+                    this.error('Failed to pair: invalid command set version');
                     break;
                 case 'INVALID_SERIAL':
-                    this.log('Failed to pair: invalid serial');
+                    this.error('Failed to pair: invalid serial');
                     break;
                 case 'INVALID_ARGUMENTS':
-                    this.log('Failed to pair: invalid arguments provided');
+                    this.error('Failed to pair: invalid arguments provided');
                     break;
                 case 'INVALID_TIMESTAMP':
-                    this.log('Failed to pair: invalid timestamp provided');
+                    this.error('Failed to pair: invalid timestamp provided');
                     break;
                 case 'NETWORK_ERROR':
-                    this.log('Failed to pair: network error');
+                    this.error('Failed to pair: network error');
                     break;
                 default:
-                    this.log('An unknown error has occurred');
+                    this.error('An unknown error has occurred');
                     break;
             }
-            if (!(result_description in ['SUCCESS', 'INVALID_SERIAL'])) {
-                this.error('An internal error has occurred. Try upgrading this application and your Nobo-Hub firmware to the latest version.');
+
+            if ((result_description != 'SUCCESS') && (result_description != 'INVALID_SERIAL')) {
+                this.error('An error has occurred when pairing. Try upgrading this app and your Nobo-Hub\s firmware to the latest version.');
             }
 
             return result[0];

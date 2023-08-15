@@ -125,13 +125,21 @@ export class NoboHub extends Homey.Device {
 
 
     async onDeleted() {
+        this.log('Removing')
+
+        this.log('Closing socket');
         this.socket!.end();
 
         this.log('Removed');
     }
 
     async onUninit() {
-        this.socket!.end();
+        this.log('Uninitialising');
+
+        if (!this.socket!.closed) {
+            this.log('Closing socket');
+            this.socket!.end();
+        }
 
         this.log('Uninitialised');
     }
