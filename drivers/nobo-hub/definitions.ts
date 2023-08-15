@@ -35,6 +35,14 @@ export class AsyncQueue<T> {
         return this.items.pop()!;
     }
 
+    async peek(): Promise<T | undefined> {
+        if (this.items.length == 0) {
+            return undefined;
+        }
+
+        return this.items[this.items.length - 1];
+    }
+
     async clear() {
         this.items = Array<T>(0);
     }
