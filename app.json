@@ -1,118 +1,132 @@
 {
-  "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
-  "id": "com.vadimtch.homey_nobo",
-  "version": "1.0.0",
-  "compatibility": ">=5.0.0",
-  "sdk": 3,
-  "platforms": [
-    "local"
-  ],
-  "name": {
-    "en": "HomeyNobo"
-  },
-  "description": {
-    "en": "Nobo Hub API integration for Homey"
-  },
-  "category": [
-    "climate"
-  ],
-  "permissions": [],
-  "author": {
-    "name": "Vadim Chichikalyuk",
-    "email": "chichikalyuk@gmail.com"
-  },
-  "drivers": [
-    {
-      "name": {
-        "en": "Nobo Hub"
-      },
-      "class": "thermostat",
-      "capabilities": [
-        "nobo_status_capability"
-      ],
-      "platforms": [
-        "local"
-      ],
-      "connectivity": [
-        "lan"
-      ],
-      "settings": [
-        {
-          "id": "serial",
-          "type": "number",
-          "label": {
-            "en": "Serial number"
-          },
-          "hint": {
-            "en": "Your Nobo Hub's serial number (12 digits)"
-          }
-        }
-      ],
-      "pair": [
-        {
-          "id": "list_devices",
-          "template": "list_devices",
-          "options": {
-            "singular": true
-          },
-          "navigation": {
-            "next": "pincode"
-          }
-        },
-        {
-          "id": "pincode",
-          "template": "pincode",
-          "options": {
-            "title": {
-              "en": "Log in"
-            },
-            "hint": {
-              "en": "Enter the last three digits of the Nobo Hub serial number"
-            },
-            "type": "number",
-            "length": 3,
-            "navigation": {
-              "next": "add_devices",
-              "prev": "list_devices"
-            }
-          }
-        },
-        {
-          "id": "add_devices",
-          "template": "add_devices"
-        }
-      ],
-      "energy": {
-        "approximation": {
-          "usageConstant": 0
-        }
-      },
-      "id": "nobo-hub"
-    }
-  ],
-  "capabilities": {
-    "nobo_status_capability": {
-      "type": "enum",
-      "values": [
-        {
-          "id": "home",
-          "title": {
-            "en": "At home"
-          }
-        },
-        {
-          "id": "away",
-          "title": {
-            "en": "Away"
-          }
-        }
-      ],
-      "title": {
-        "en": "Mode"
-      },
-      "uiComponent": "picker",
-      "getable": true,
-      "setable": true
-    }
-  }
+	"_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
+	"id": "com.vadimtch.homey_nobo",
+	"version": "1.0.0",
+	"compatibility": ">=5.0.0",
+	"sdk": 3,
+	"platforms": [
+		"local"
+	],
+	"name": {
+		"en": "HomeyNobo"
+	},
+	"description": {
+		"en": "Nobo Hub API integration for Homey"
+	},
+	"category": [
+		"climate"
+	],
+	"permissions": [],
+	"author": {
+		"name": "Vadim Chichikalyuk",
+		"email": "chichikalyuk@gmail.com"
+	},
+	"drivers": [
+		{
+			"name": {
+				"en": "Nobo Hub"
+			},
+			"class": "thermostat",
+			"capabilities": [
+				"nobo_status_capability"
+			],
+			"platforms": [
+				"local"
+			],
+			"connectivity": [
+				"lan"
+			],
+			"settings": [
+				{
+					"id": "serial",
+					"type": "number",
+					"min": 0,
+					"label": {
+						"en": "Serial number"
+					},
+					"hint": {
+						"en": "Your Nobo Hub's serial number (12 digits)"
+					}
+				},
+				{
+					"id": "polling_interval",
+					"type": "number",
+					"min": 0,
+					"value": 5,
+					"units": "seconds",
+					"label": {
+						"en": "Polling interval"
+					},
+					"hint": {
+						"en": "How often the Nobo-Hub will be polled for status updates"
+					}
+				}
+			],
+			"pair": [
+				{
+					"id": "list_devices",
+					"template": "list_devices",
+					"options": {
+						"singular": true
+					},
+					"navigation": {
+						"next": "pincode"
+					}
+				},
+				{
+					"id": "pincode",
+					"template": "pincode",
+					"options": {
+						"title": {
+							"en": "Log in"
+						},
+						"hint": {
+							"en": "Enter the last three digits of the Nobo Hub serial number"
+						},
+						"type": "number",
+						"length": 3,
+						"navigation": {
+							"next": "add_devices",
+							"prev": "list_devices"
+						}
+					}
+				},
+				{
+					"id": "add_devices",
+					"template": "add_devices"
+				}
+			],
+			"energy": {
+				"approximation": {
+					"usageConstant": 0
+				}
+			},
+			"id": "nobo-hub"
+		}
+	],
+	"capabilities": {
+		"nobo_status_capability": {
+			"type": "enum",
+			"values": [
+				{
+					"id": "home",
+					"title": {
+						"en": "At home"
+					}
+				},
+				{
+					"id": "away",
+					"title": {
+						"en": "Away"
+					}
+				}
+			],
+			"title": {
+				"en": "Mode"
+			},
+			"uiComponent": "picker",
+			"getable": true,
+			"setable": true
+		}
+	}
 }

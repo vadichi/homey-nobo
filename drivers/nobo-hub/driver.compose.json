@@ -1,66 +1,80 @@
 {
-  "name": {
-    "en": "Nobo Hub"
-  },
-  "class": "thermostat",
-  "capabilities": [
-    "nobo_status_capability"
-  ],
-  "platforms": [
-    "local"
-  ],
-  "connectivity": [
-    "lan"
-  ],
-  "settings": [
-    {
-      "id": "serial",
-      "type": "number",
-      "label": {
-        "en": "Serial number"
-      },
-      "hint": {
-        "en": "Your Nobo Hub's serial number (12 digits)"
-      }
-    }
-  ],
-  "pair": [
-    {
-      "id": "list_devices",
-      "template": "list_devices",
-      "options": {
-        "singular": true
-      },
-      "navigation": {
-        "next": "pincode"
-      }
-    },
-    {
-      "id": "pincode",
-      "template": "pincode",
-      "options": {
-        "title": {
-          "en": "Log in"
-        },
-        "hint": {
-          "en": "Enter the last three digits of the Nobo Hub serial number"
-        },
-        "type": "number",
-        "length": 3,
-        "navigation": {
-          "next": "add_devices",
-          "prev": "list_devices"
-        }
-      }
-    },
-    {
-      "id": "add_devices",
-      "template": "add_devices"
-    }
-  ],
-  "energy": {
-    "approximation": {
-      "usageConstant": 0
-    }
-  }
+	"name": {
+		"en": "Nobo Hub"
+	},
+	"class": "thermostat",
+	"capabilities": [
+		"nobo_status_capability"
+	],
+	"platforms": [
+		"local"
+	],
+	"connectivity": [
+		"lan"
+	],
+	"settings": [
+		{
+			"id": "serial",
+			"type": "number",
+			"min": 0,
+			"label": {
+				"en": "Serial number"
+			},
+			"hint": {
+				"en": "Your Nobo Hub's serial number (12 digits)."
+			}
+		},
+		{
+			"id": "polling_interval",
+			"type": "number",
+			"min": 0,
+			"value": 5,
+			"units": "seconds",
+			"label": {
+				"en": "Polling interval"
+			},
+			"hint": {
+				"en": "How often the Nobo-Hub will be polled for status updates."
+			}
+		}
+	],
+	"pair": [
+		{
+			"id": "list_devices",
+			"template": "list_devices",
+			"options": {
+				"singular": true
+			},
+			"navigation": {
+				"next": "pincode"
+			}
+		},
+		{
+			"id": "pincode",
+			"template": "pincode",
+			"options": {
+				"title": {
+					"en": "Log in"
+				},
+				"hint": {
+					"en": "Enter the last three digits of the Nobo Hub serial number"
+				},
+				"type": "number",
+				"length": 3,
+				"navigation": {
+					"next": "add_devices",
+					"prev": "list_devices"
+				}
+			}
+		},
+		{
+			"id": "add_devices",
+			"template": "add_devices"
+		}
+	],
+	"energy": {
+		"approximation": {
+			"usageConstant": 0
+		}
+	}
 }

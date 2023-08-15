@@ -1,23 +1,23 @@
 {
-  "id": "com.vadimtch.homey_nobo",
-  "version": "1.0.0",
-  "compatibility": ">=5.0.0",
-  "sdk": 3,
-  "platforms": [
-    "local"
-  ],
-  "name": {
-    "en": "HomeyNobo"
-  },
-  "description": {
-    "en": "Nobo Hub API integration for Homey"
-  },
-  "category": [
-    "climate"
-  ],
-  "permissions": [],
-  "author": {
-    "name": "Vadim Chichikalyuk",
-    "email": "chichikalyuk@gmail.com"
-  }
+	"id": "com.vadimtch.homey_nobo",
+	"version": "1.0.0",
+	"compatibility": ">=5.0.0",
+	"sdk": 3,
+	"platforms": [
+		"local"
+	],
+	"name": {
+		"en": "HomeyNobo"
+	},
+	"description": {
+		"en": "Nobo Hub API integration for Homey"
+	},
+	"category": [
+		"climate"
+	],
+	"permissions": [],
+	"author": {
+		"name": "Vadim Chichikalyuk",
+		"email": "chichikalyuk@gmail.com"
+	}
 }
