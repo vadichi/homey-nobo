@@ -92,7 +92,7 @@ export class NoboHubDriver extends Homey.Driver {
             }
 
             if ((result_description != 'SUCCESS') && (result_description != 'INVALID_SERIAL')) {
-                this.error('An error has occurred when pairing. Try upgrading this app and your Nobo-Hub\s firmware to the latest version.');
+                throw new Error('An unexpected error has occurred while pairing. Try upgrading the Homey-Nobo application and your Nobo-Hub\s firmware to the latest version.');
             }
 
             return result[0];
