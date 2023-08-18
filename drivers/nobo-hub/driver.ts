@@ -17,15 +17,18 @@
 
 import Homey from 'homey';
 import PairSession from "homey/lib/PairSession";
-import NoboHub from './device';
 import {DiscoveredDevice} from './definitions';
 import * as Buffer from "buffer";
 import * as dgram from "dgram";
+import {NoboHubAPI} from "./device_api";
 
 const DISCOVERY_MESSAGE_MARKER: string = '__NOBOHUB__';
 const DISCOVERY_PORT: number = 10000;
 
 export class NoboHubDriver extends Homey.Driver {
+
+    static addedDeviceAPIConnection: NoboHubAPI | undefined = undefined;
+    static addedDeviceSerial: string | undefined = undefined;
 
     private discovery_listener: dgram.Socket = dgram.createSocket('udp4');
     private discovered_devices: DiscoveredDevice[] = Array<DiscoveredDevice>(0);
@@ -65,37 +68,15 @@ export class NoboHubDriver extends Homey.Driver {
 
             this.log(`Attempting to pair with a Nobo-Hub at ${selected_device.store.ip} with serial ${serial}`);
 
-            let result = await NoboHub.attemptConnection(selected_device.store.ip, serial);
-            let result_description = result[1];
-            switch (result_description) {
-                case 'SUCCESS':
-                    this.log('Paired successfully');
-                    break;
-                case 'INVALID_COMMAND_SET_VERSION':
-                    this.error('Failed to pair: invalid command set version');
-                    break;
-                case 'INVALID_SERIAL':
-                    this.error('Failed to pair: invalid serial');
-                    break;
-                case 'INVALID_ARGUMENTS':
-                    this.error('Failed to pair: invalid arguments provided');
-                    break;
-                case 'INVALID_TIMESTAMP':
-                    this.error('Failed to pair: invalid timestamp provided');
-                    break;
-                case 'NETWORK_ERROR':
-                    this.error('Failed to pair: network error');
-                    break;
-                default:
-                    this.error('An unknown error has occurred');
-                    break;
+            let api = new NoboHubAPI(this);
+            let result = await api.attemptConnection(selected_device.store.ip, serial);
+
+            if (result) {
+                NoboHubDriver.addedDeviceSerial = serial;
+                NoboHubDriver.addedDeviceAPIConnection = api;
             }
 
-            if ((result_description != 'SUCCESS') && (result_description != 'INVALID_SERIAL')) {
-                throw new Error('An unexpected error has occurred while pairing. Try upgrading the Homey-Nobo application and your Nobo-Hub\s firmware to the latest version.');
-            }
-
-            return result[0];
+            return result;
         });
     }
 
@@ -136,3 +117,4 @@ export class NoboHubDriver extends Homey.Driver {
 }
 
 module.exports = NoboHubDriver;
+export default NoboHubDriver;

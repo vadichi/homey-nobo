@@ -24,5 +24,4 @@ export class HomeyNobo extends Homey.App {
     }
 
 }
-
 module.exports = HomeyNobo;
