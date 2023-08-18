@@ -28,23 +28,27 @@ export class AsyncQueue<T> {
     }
 
     async dequeue(): Promise<T> {
-        while (this.items.length == 0) {
-            await new Promise<void>(resolve => setTimeout(resolve, 0));
-        }
-
+        await this.awaitNotEmpty();
         return this.items.pop()!;
     }
 
-    async peek(): Promise<T | undefined> {
-        if (this.items.length == 0) {
-            return undefined;
-        }
-
+    async peek(): Promise<T> {
+        await this.awaitNotEmpty();
         return this.items[this.items.length - 1];
     }
 
     async clear() {
         this.items = Array<T>(0);
+    }
+
+    async is_empty() {
+        return this.items.length == 0;
+    }
+
+    private async awaitNotEmpty() {
+        while (this.items.length == 0) {
+            await new Promise<void>(resolve => setTimeout(resolve, 0));
+        }
     }
 }
 
