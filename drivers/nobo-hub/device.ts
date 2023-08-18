@@ -70,7 +70,5 @@ export class NoboHub extends Homey.Device {
 
 }
 
-}
-
 module.exports = NoboHub;
 export default NoboHub;
