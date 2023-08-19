@@ -38,7 +38,7 @@ const GET_STATE_COMMAND: string = 'G00';
 const GET_STATE_RESPONSE_CURRENT_MODE_MESSAGE: string = 'H04';
 const GET_STATE_RESPONSE_FINAL_MESSAGE: string = 'H05';
 
-const KEEPALIVE_INTERVAL_SECONDS: number = 14;
+const KEEPALIVE_INTERVAL_SECONDS: number = 12;
 const MODE_CHANGE_LISTENER_INTERVAL_SECONDS: number = 3;
 
 const NOBO_HUB_USEFUL_RESPONSES: string[] = [
@@ -51,11 +51,11 @@ const NOBO_HUB_USEFUL_RESPONSES: string[] = [
 ];
 
 export class NoboHubAPI extends EventEmitter {
-    private socket: net.Socket;
-    private messageQueue: AsyncQueue<string> = new AsyncQueue<string>();
-    private currentMode: NoboHubMode = NoboHubMode.NORMAL;
+    currentMode: NoboHubMode = NoboHubMode.NORMAL;
 
     private owner: NoboHub | NoboHubDriver;
+    private socket: net.Socket;
+    private messageQueue: AsyncQueue<string> = new AsyncQueue<string>();
 
     constructor(owner: NoboHub | NoboHubDriver) {
         super();
@@ -246,10 +246,10 @@ export class NoboHubAPI extends EventEmitter {
         this.log('Received final response segment');
     }
 
-    private async switchMode(newMode: NoboHubMode){
+    async switchMode(newMode: NoboHubMode){
         this.log(`Switching mode to ${newMode}`);
 
-        let command = `${SET_STATE_COMMAND} 1 0 ${newMode.valueOf()} -1 -1 ${GLOBAL_STATE_MARKER_TOKEN_6} ${GLOBAL_STATE_MARKER_TOKEN_7}\r`;
+        let command = `${SET_STATE_COMMAND} 1 ${newMode} 3 -1 -1 ${GLOBAL_STATE_MARKER_TOKEN_6} ${GLOBAL_STATE_MARKER_TOKEN_7}\r`;
 
         this.log(`Sending switch mode command: ${command}`);
         this.socket.write(command);
@@ -286,7 +286,7 @@ export class NoboHubAPI extends EventEmitter {
     private setMode(id: string) {
         this.currentMode = (parseInt(id) as NoboHubMode);
 
-        console.log('Emitting mode change event');
+        this.log('Emitting mode change event');
         this.emit('mode_change', this.currentMode);
     }
 

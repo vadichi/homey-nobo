@@ -25,6 +25,7 @@ export class NoboHub extends Homey.Device {
     async onInit() {
         this.log('Initialising');
 
+        // ToDo occasionally checking the mode manually might be a good idea
         if (NoboHubDriver.addedDeviceSerial != undefined) {
             this.log('Initialising as a new device');
 
@@ -43,13 +44,19 @@ export class NoboHub extends Homey.Device {
 
             // Handle result; launch repair if necessary
             this.apiConnection = new NoboHubAPI(this);
-            await this.apiConnection.attemptConnection(ip, serial);
+            await this.apiConnection!.attemptConnection(ip, serial);
         }
 
-        this.apiConnection.on('mode_change', (mode: NoboHubMode) => {
+        this.registerCapabilityListener('nobo_status_capability', async (option: string) => {
+            let newMode = NoboHubMode[option as keyof typeof NoboHubMode];
+            await this.apiConnection!.switchMode(newMode);
+        });
+
+        this.apiConnection!.on('mode_change', (mode: NoboHubMode) => {
            this.setCapabilityValue('nobo_status_capability', NoboHubMode[mode]);
         });
 
+        await this.setCapabilityValue('nobo_status_capability', NoboHubMode[this.apiConnection!.currentMode]);
         this.log('Initialised');
     }
 
