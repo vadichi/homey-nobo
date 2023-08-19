@@ -16,7 +16,7 @@
  */
 
 import Homey from 'homey';
-import {NoboHubAPI} from "./device_api";
+import {NoboHubAPI, NoboHubMode} from "./device_api";
 import NoboHubDriver from "./driver";
 
 export class NoboHub extends Homey.Device {
@@ -45,6 +45,10 @@ export class NoboHub extends Homey.Device {
             this.apiConnection = new NoboHubAPI(this);
             await this.apiConnection.attemptConnection(ip, serial);
         }
+
+        this.apiConnection.on('mode_change', (mode: NoboHubMode) => {
+           this.setCapabilityValue('nobo_status_capability', NoboHubMode[mode]);
+        });
 
         this.log('Initialised');
     }

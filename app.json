@@ -109,25 +109,25 @@
       "type": "enum",
       "values": [
         {
-          "id": "home",
+          "id": "NORMAL",
           "title": {
             "en": "At home"
           }
         },
         {
-          "id": "comfort",
+          "id": "COMFORT",
           "title": {
             "en": "Comfort"
           }
         },
         {
-          "id": "eco",
+          "id": "ECO",
           "title": {
             "en": "Eco"
           }
         },
         {
-          "id": "away",
+          "id": "AWAY",
           "title": {
             "en": "Away"
           }

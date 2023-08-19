@@ -19,6 +19,7 @@ import NoboHub from "./device";
 import NoboHubDriver from "./driver";
 import {AsyncQueue} from "./definitions";
 import net from "net";
+import EventEmitter from "events";
 
 const PORT: number = 27779;
 const COMMAND_SET_VERSION: string = "1.1";
@@ -49,7 +50,7 @@ const NOBO_HUB_USEFUL_RESPONSES: string[] = [
     GET_STATE_RESPONSE_FINAL_MESSAGE
 ];
 
-export class NoboHubAPI {
+export class NoboHubAPI extends EventEmitter {
     private socket: net.Socket;
     private messageQueue: AsyncQueue<string> = new AsyncQueue<string>();
     private currentMode: NoboHubMode = NoboHubMode.NORMAL;
@@ -57,6 +58,8 @@ export class NoboHubAPI {
     private owner: NoboHub | NoboHubDriver;
 
     constructor(owner: NoboHub | NoboHubDriver) {
+        super();
+
         this.owner = owner
 
         this.socket = new net.Socket();
@@ -282,6 +285,9 @@ export class NoboHubAPI {
 
     private setMode(id: string) {
         this.currentMode = (parseInt(id) as NoboHubMode);
+
+        console.log('Emitting mode change event');
+        this.emit('mode_change', this.currentMode);
     }
 
     private log(message: string) {
@@ -289,7 +295,7 @@ export class NoboHubAPI {
     }
 }
 
-enum NoboHubMode {
+export enum NoboHubMode {
     NORMAL = 0,
     COMFORT = 1,
     ECO = 2,
