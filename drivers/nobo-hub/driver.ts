@@ -21,6 +21,7 @@ import {DiscoveredDevice} from './definitions';
 import * as Buffer from "buffer";
 import * as dgram from "dgram";
 import {NoboHubAPI} from "./device_api";
+import net from "net";
 
 const DISCOVERY_MESSAGE_MARKER: string = '__NOBOHUB__';
 const DISCOVERY_PORT: number = 10000;

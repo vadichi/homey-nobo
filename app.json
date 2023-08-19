@@ -115,6 +115,18 @@
           }
         },
         {
+          "id": "comfort",
+          "title": {
+            "en": "Comfort"
+          }
+        },
+        {
+          "id": "eco",
+          "title": {
+            "en": "Eco"
+          }
+        },
+        {
           "id": "away",
           "title": {
             "en": "Away"

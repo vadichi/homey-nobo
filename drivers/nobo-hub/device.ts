@@ -22,20 +22,18 @@ import NoboHubDriver from "./driver";
 export class NoboHub extends Homey.Device {
     private apiConnection: NoboHubAPI | undefined = undefined;
 
-    async onAdded() {
-        this.log('Adding a new device');
-
-        this.log(`Changing temporary serial to ${NoboHubDriver.addedDeviceSerial!}`);
-        await this.setSettings({serial: parseInt(NoboHubDriver.addedDeviceSerial!)});
-
-        this.apiConnection = NoboHubDriver.addedDeviceAPIConnection!;
-        this.apiConnection!.updateOwner(this);
-
-        this.log('New device added');
-    }
-
     async onInit() {
         this.log('Initialising');
+
+        if (NoboHubDriver.addedDeviceSerial != undefined) {
+            this.log('Initialising as a new device');
+
+            this.log(`Changing temporary serial to ${NoboHubDriver.addedDeviceSerial!}`);
+            await this.setSettings({serial: parseInt(NoboHubDriver.addedDeviceSerial!)});
+
+            this.apiConnection = NoboHubDriver.addedDeviceAPIConnection!;
+            this.apiConnection!.updateOwner(this);
+        }
 
         if (this.apiConnection == undefined) {
             let ip = this.getStoreValue('ip');
