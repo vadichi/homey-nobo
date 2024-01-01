@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Vadim Chichikalyuk
+ * Copyright 2024 Vadim Chichikalyuk
  *
  * This file is part of Homey-Nobo
  *
@@ -53,9 +53,14 @@ const NOBO_HUB_USEFUL_RESPONSES: string[] = [
 export class NoboHubAPI extends EventEmitter {
     currentMode: NoboHubMode = NoboHubMode.NORMAL;
 
+    private ip: string | undefined = undefined;
+    private serial: string | undefined = undefined;
     private owner: NoboHub | NoboHubDriver;
+
     private socket: net.Socket;
+    private apiState: APIState = APIState.DISCONNECTED;
     private messageQueue: AsyncQueue<string> = new AsyncQueue<string>();
+    private lastError: Error | undefined = undefined;
 
     constructor(owner: NoboHub | NoboHubDriver) {
         super();
@@ -70,26 +75,56 @@ export class NoboHubAPI extends EventEmitter {
     }
 
     async attemptConnection(ip: string, serial: string): Promise<boolean> {
-        let temporary_connect_listener = async () => {};
-        let temporary_error_listener = async(error: any) => {};
+        this.ip = ip;
+        this.serial = serial;
 
-        await this.messageQueue.clear();
         this.socket.addListener('data', async (data: string) => {
             await this.onMessage(data);
         });
+        this.socket.addListener('error', async (error: Error) => {
+            await this.onError(error);
+        });
 
+        this.log('Added permanent socket event listeners');
+
+        let result = await this.attemptReconnection();
+        if (!result) {
+            return result;
+        }
+
+        this.socket.addListener('close', async (hadError: boolean) => {
+            await this.onClose(hadError);
+        });
+
+        this.log('Added permanent event listeners');
+
+        this.log(`Pairing complete`)
+        return result;
+    }
+
+    async attemptReconnection(): Promise<boolean> {
+        if (this.ip == undefined || this.serial == undefined) {
+            throw Error("Cannot attempt reconnection without connection details configured");
+        }
+
+        this.lastError = undefined;
+        this.log('Reset error state');
+
+        await this.messageQueue.clear();
         this.log('Initialised message queue');
-        this.log('Added socket message listener');
+
+        let temporary_connect_listener = async () => {};
+        let temporary_error_listener = async(_: any) => {};
 
         let result = await new Promise<boolean>((resolve) => {
-            this.socket.connect({host: ip, port: PORT});
+            this.socket.connect({host: this.ip, port: PORT});
             this.log('Attempting socket connection');
 
             temporary_connect_listener = async () => {
                 this.log('Successfully established connection')
 
                 let timestamp = this.getCurrentTimestamp();
-                let connect_command = `${CONNECT_COMMAND} ${COMMAND_SET_VERSION} ${serial} ${timestamp}\r`;
+                let connect_command = `${CONNECT_COMMAND} ${COMMAND_SET_VERSION} ${this.serial} ${timestamp}`;
 
                 this.log('Starting handshake sequence');
                 this.log(`Sending HELLO command: ${connect_command}`);
@@ -106,7 +141,7 @@ export class NoboHubAPI extends EventEmitter {
                     this.log('Connection accepted');
                 }
 
-                let handshake_command = `${HANDSHAKE_MESSAGE}\r`;
+                let handshake_command = `${HANDSHAKE_MESSAGE}`;
 
                 this.log(`Sending HANDSHAKE command: ${handshake_command}`);
                 this.socket.write(handshake_command);
@@ -114,6 +149,7 @@ export class NoboHubAPI extends EventEmitter {
                 response = await this.messageQueue.dequeue();
                 this.log(`Received response: ${response}`);
 
+                this.apiState = APIState.CONNECTED;
                 this.log(`Connection successful`);
                 resolve(true);
                 return;
@@ -149,7 +185,7 @@ export class NoboHubAPI extends EventEmitter {
         this.log('Starting custom keep-alive sender task');
         this.proprietaryKeepAliveSender().then();
 
-        this.log(`Pairing complete`)
+        this.log('Connection process complete');
         return result;
     }
 
@@ -164,10 +200,21 @@ export class NoboHubAPI extends EventEmitter {
         }
     }
 
+
     updateOwner(newOwner: NoboHub | NoboHubDriver) {
         this.log(`Updating API owner`);
         this.owner = newOwner;
     }
+
+    async switchMode(newMode: NoboHubMode){
+        this.log(`Switching mode to ${newMode}`);
+
+        let command = `${SET_STATE_COMMAND} 1 ${newMode} 3 -1 -1 ${GLOBAL_STATE_MARKER_TOKEN_6} ${GLOBAL_STATE_MARKER_TOKEN_7}`;
+
+        this.log(`Sending switch mode command: ${command}`);
+        this.socket.write(command);
+    }
+
 
     private async onMessage(data: string) {
         this.log('Received new transmission');
@@ -186,11 +233,26 @@ export class NoboHubAPI extends EventEmitter {
         }
     }
 
+    private async onError(error: Error) {
+        this.log(`A network error has occurred: ${error}`);
+        this.lastError = error;
+        this.apiState = APIState.DISCONNECTED;
+    }
+
+    private async onClose(dueToError: boolean) {
+        if ((!dueToError) && (this.lastError == undefined)) return;
+
+        this.log(`The socket has been closed due to a network error`);
+        this.emit('network_error');
+    }
+
+
     private async modeChangeListener() {
         this.log('Mode change listener started');
 
         while (true) {
-            if (this.socket.closed) {
+            if (this.apiState != APIState.CONNECTED || this.lastError != undefined) {
+                this.log('Mode change listener detected a socket error - shutting down');
                 return;
             }
 
@@ -203,7 +265,7 @@ export class NoboHubAPI extends EventEmitter {
                 await this.messageQueue.dequeue();
 
                 if (messageTokens[6] == GLOBAL_STATE_MARKER_TOKEN_6) {
-                    this.setMode(messageTokens[2]);
+                    this.setDisplayedMode(messageTokens[2]);
 
                     this.log('Global mode change');
                     this.log(`New mode: ${this.currentMode}`);
@@ -216,10 +278,34 @@ export class NoboHubAPI extends EventEmitter {
         }
     }
 
+    private async proprietaryKeepAliveSender() {
+        while (true) {
+            if (this.apiState != APIState.CONNECTED || this.lastError != undefined) {
+                this.log('Keep-alive sender detected a socket error - shutting down');
+                return
+            }
+
+            let command = `${KEEPALIVE_COMMAND}`;
+
+            this.log(`Sending keep-alive message: ${command}`);
+            this.socket.write(command);
+
+            await new Promise<void>(resolve => setTimeout(resolve, KEEPALIVE_INTERVAL_SECONDS * 1000));
+        }
+    }
+
+
+    private setDisplayedMode(id: string) {
+        this.currentMode = (parseInt(id) as NoboHubMode);
+
+        this.log('Emitting mode change event to the UI');
+        this.emit('mode_change', this.currentMode);
+    }
+
     private async requestCurrentMode(){
         this.log('Requesting current override state');
 
-        let command = `${GET_STATE_COMMAND}\r`;
+        let command = `${GET_STATE_COMMAND}`;
 
         this.log(`Sending get state command: ${command}`);
         this.socket.write(command);
@@ -234,7 +320,7 @@ export class NoboHubAPI extends EventEmitter {
             this.log(`Received response; current mode segment: ${response}`);
 
             if (responseTokens[6] == GLOBAL_STATE_MARKER_TOKEN_6) {
-                this.setMode(responseTokens[2]);
+                this.setDisplayedMode(responseTokens[2]);
 
                 this.log('Global mode information');
                 this.log(`Set mode: ${this.currentMode}`);
@@ -244,30 +330,6 @@ export class NoboHubAPI extends EventEmitter {
         } while (responseTokens[0] != GET_STATE_RESPONSE_FINAL_MESSAGE);
 
         this.log('Received final response segment');
-    }
-
-    async switchMode(newMode: NoboHubMode){
-        this.log(`Switching mode to ${newMode}`);
-
-        let command = `${SET_STATE_COMMAND} 1 ${newMode} 3 -1 -1 ${GLOBAL_STATE_MARKER_TOKEN_6} ${GLOBAL_STATE_MARKER_TOKEN_7}\r`;
-
-        this.log(`Sending switch mode command: ${command}`);
-        this.socket.write(command);
-    }
-
-    private async proprietaryKeepAliveSender() {
-        while (true) {
-            if (this.socket.closed) {
-                return
-            }
-
-            let command = `${KEEPALIVE_COMMAND}\r`;
-
-            this.log(`Sending keep-alive message: ${command}`);
-            this.socket.write(command);
-
-            await new Promise<void>(resolve => setTimeout(resolve, KEEPALIVE_INTERVAL_SECONDS * 1000));
-        }
     }
 
     private getCurrentTimestamp(): string {
@@ -283,13 +345,6 @@ export class NoboHubAPI extends EventEmitter {
         return `${year}${month}${day}${hours}${minutes}${seconds}`;
     }
 
-    private setMode(id: string) {
-        this.currentMode = (parseInt(id) as NoboHubMode);
-
-        this.log('Emitting mode change event');
-        this.emit('mode_change', this.currentMode);
-    }
-
     private log(message: string) {
         this.owner.log(`[API] ${message.trim()}`);
     }
@@ -300,4 +355,9 @@ export enum NoboHubMode {
     COMFORT = 1,
     ECO = 2,
     AWAY = 3,
+}
+
+enum APIState {
+    DISCONNECTED,
+    CONNECTED,
 }

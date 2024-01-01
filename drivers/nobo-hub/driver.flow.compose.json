@@ -1,0 +1,139 @@
+{
+	"triggers": [
+		{
+			"id": "nobo_status_capability_changed",
+
+			"title": {
+				"en": "Nobo Hub status changed"
+			},
+
+			"tokens": [
+				{
+					"name": "nobo_status_capability",
+					"title": "Nobo Hub status",
+					"type": "string"
+				}
+			]
+		},
+		{
+			"id": "nobo_status_capability_changed_to_normal",
+
+			"title": {
+				"en": "Nobo Hub status changed to Home"
+			}
+		},
+		{
+			"id": "nobo_status_capability_changed_to_comfort",
+
+			"title": {
+				"en": "Nobo Hub status changed to Comfort"
+			}
+		},
+		{
+			"id": "nobo_status_capability_changed_to_eco",
+
+			"title": {
+				"en": "Nobo Hub status changed to Eco"
+			}
+		},
+		{
+			"id": "nobo_status_capability_changed_to_away",
+
+			"title": {
+				"en": "Nobo Hub status changed to Away"
+			}
+		}
+	],
+
+	"conditions": [
+		{
+			"id": "nobo_status_capability_is",
+
+			"title": {
+				"en": "Nobo Hub status is..."
+			},
+			"titleFormatted": {
+				"en": "Nobo Hub status is [[mode]]"
+			},
+
+			"args": [
+				{
+					"name": "mode",
+					"type": "dropdown",
+					"values": [
+						{
+							"id": "0",
+							"label": {
+								"en": "Normal"
+							}
+						},
+						{
+							"id": "1",
+							"label": {
+								"en": "Comfort"
+							}
+						},
+						{
+							"id": "2",
+							"label": {
+								"en": "Eco"
+							}
+						},
+						{
+							"id": "3",
+							"label": {
+								"en": "Away"
+							}
+						}
+					]
+				}
+			]
+		}
+	],
+
+	"actions": [
+		{
+			"id": "nobo_status_capability_set",
+
+			"title": {
+				"en": "Set Nobo Hub mode to..."
+			},
+			"formattedTitle": {
+				"en": "Set Nobo Hub mode to [[mode]]"
+			},
+
+			"args": [
+				{
+					"name": "mode",
+					"type": "dropdown",
+					"values": [
+						{
+							"id": "0",
+							"label": {
+								"en": "Normal"
+							}
+						},
+						{
+							"id": "1",
+							"label": {
+								"en": "Comfort"
+							}
+						},
+						{
+							"id": "2",
+							"label": {
+								"en": "Eco"
+							}
+						},
+						{
+							"id": "3",
+							"label": {
+								"en": "Away"
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}

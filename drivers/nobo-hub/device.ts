@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Vadim Chichikalyuk
+ * Copyright 2024 Vadim Chichikalyuk
  *
  * This file is part of Homey-Nobo
  *
@@ -19,13 +19,22 @@ import Homey from 'homey';
 import {NoboHubAPI, NoboHubMode} from "./device_api";
 import NoboHubDriver from "./driver";
 
+const RECONNECTION_DELAY_SECONDS: number = 1;
+const RECONNECTION_MAXIMUM_ATTEMPTS: number = 15;
+
 export class NoboHub extends Homey.Device {
     private apiConnection: NoboHubAPI | undefined = undefined;
+
+    private modeAction = this.homey.flow.getActionCard('nobo_status_capability_set');
+    private modeIsCondition = this.homey.flow.getConditionCard('nobo_status_capability_is');
+    private modeChangedToNormalTrigger = this.homey.flow.getDeviceTriggerCard('nobo_status_capability_changed_to_normal');
+    private modeChangedToEcoTrigger = this.homey.flow.getDeviceTriggerCard('nobo_status_capability_changed_to_eco');
+    private modeChangedToComfortTrigger = this.homey.flow.getDeviceTriggerCard('nobo_status_capability_changed_to_comfort');
+    private modeChangedToAwayTrigger = this.homey.flow.getDeviceTriggerCard('nobo_status_capability_changed_to_away');
 
     async onInit() {
         this.log('Initialising');
 
-        // ToDo occasionally checking the mode manually might be a good idea
         if (NoboHubDriver.addedDeviceSerial != undefined) {
             this.log('Initialising as a new device');
 
@@ -54,7 +63,47 @@ export class NoboHub extends Homey.Device {
 
         this.apiConnection!.on('mode_change', (mode: NoboHubMode) => {
            this.setCapabilityValue('nobo_status_capability', NoboHubMode[mode]);
+
+           switch (mode) {
+               case NoboHubMode.NORMAL:
+                   this.modeChangedToNormalTrigger.trigger(this);
+                   break;
+               case NoboHubMode.ECO:
+                     this.modeChangedToEcoTrigger.trigger(this);
+                     break;
+                case NoboHubMode.COMFORT:
+                    this.modeChangedToComfortTrigger.trigger(this);
+                    break;
+                case NoboHubMode.AWAY:
+                    this.modeChangedToAwayTrigger.trigger(this);
+                    break;
+           }
         });
+
+        this.apiConnection!.on('network_error', async () => {
+            this.log('Network error, attempting reconnection');
+
+            for (let i = 0; i < RECONNECTION_MAXIMUM_ATTEMPTS; i++) {
+                this.log(`Waiting ${RECONNECTION_DELAY_SECONDS} seconds`);
+                await new Promise(resolve => setTimeout(resolve, RECONNECTION_DELAY_SECONDS * 1000));
+
+                let result = await this.apiConnection!.attemptReconnection();
+                if (result) {
+                    this.log('Reconnection successful');
+                    return;
+                }
+            }
+
+            throw Error('Reconnection failed');
+        });
+
+        this.modeAction.registerRunListener(async (args, _) => {
+            await this.apiConnection!.switchMode(args["mode"] as NoboHubMode);
+        });
+        this.modeIsCondition.registerRunListener(async (args, _) => {
+            return args["mode"] == this.getCapabilityValue('nobo_status_capability');
+        });
+        this.log('Initialised flow card listeners')
 
         await this.setCapabilityValue('nobo_status_capability', NoboHubMode[this.apiConnection!.currentMode]);
         this.log('Initialised');
