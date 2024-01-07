@@ -31,5 +31,6 @@
 	},
 	"uiComponent": "picker",
 	"getable": true,
-	"setable": true
+	"setable": true,
+	"insights": true
 }
